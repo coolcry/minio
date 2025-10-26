@@ -9,10 +9,6 @@ on:
 permissions:
     contents: read
 
-env:
-    # Docker Hub 命名空间/仓库：默认用你的用户名/minio（强制小写）
-    DOCKERHUB_IMAGE: ${{ toLower(format('{0}/minio', secrets.DOCKERHUB_USERNAME)) }}
-
 jobs:
     build:
         runs-on: ubuntu-latest
@@ -23,7 +19,7 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: Check Docker Hub secrets
+            - name: Ensure Docker Hub secrets
               run: |
                   if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
                     echo "Missing DOCKERHUB_USERNAME or DOCKERHUB_TOKEN secrets"; exit 1;
@@ -41,12 +37,18 @@ jobs:
                   username: ${{ secrets.DOCKERHUB_USERNAME }}
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-            # 自动生成 tags/labels（latest/branch/tag/sha）
+            # ✅ 这里把镜像名转成小写
+            - name: Set image name (lowercase)
+              id: img
+              shell: bash
+              run: |
+                  echo "image=$(echo '${{ secrets.DOCKERHUB_USERNAME }}/minio' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
             - name: Docker metadata
               id: meta
               uses: docker/metadata-action@v5
               with:
-                  images: ${{ env.DOCKERHUB_IMAGE }}
+                  images: ${{ steps.img.outputs.image }}
                   tags: |
                       type=ref,event=branch
                       type=ref,event=tag
