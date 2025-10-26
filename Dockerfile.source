@@ -57,6 +57,11 @@ FROM alpine:latest
 #  && adduser -D -u 10001 -G minio -h /home/minio -s /sbin/nologin minio \
 #  && apk add --no-cache ca-certificates tzdata wget
 
+RUN apk add --no-cache \
+      ca-certificates tzdata wget minio-client \
+    ;\
+    ln -sf /usr/bin/mcli /usr/local/bin/mc;
+
 # USER minio:minio
 # WORKDIR /data
 
